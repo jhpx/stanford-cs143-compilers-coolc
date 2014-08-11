@@ -1,51 +1,60 @@
 
-ASSN = 2
+ASSN = 3
 CLASS= cs143
-CLASSDIR= ../class/cs143/cool/
-LIB= -L/usr/lib -lfl
+CLASSDIR= ../class/cs143/cool
+LIB= -lfl
+AR= gar
+ARCHIVE_NEW= -cr
+RANLIB= gar -qs
 
-SRC= cool.flex test.cl README 
-CSRC= lextest.cc utilities.cc stringtab.cc handle_flags.cc
-TSRC= mycoolc
-HSRC= 
-CGEN= cool-lex.cc
-HGEN=
-LIBS= parser semant cgen
+SRC= cool.y cool-tree.handcode.h good.cl bad.cl README
+CSRC= parser-phase.cc utilities.cc stringtab.cc dumptype.cc \
+      tree.cc cool-tree.cc tokens-lex.cc  handle_flags.cc 
+TSRC= myparser mycoolc cool-tree.aps
+CGEN= cool-parse.cc
+HGEN= cool-parse.h
+LIBS= lexer semant cgen
 CFIL= ${CSRC} ${CGEN}
+HFIL= cool-tree.h cool-tree.handcode.h 
 LSRC= Makefile
 OBJS= ${CFIL:.cc=.o}
-OUTPUT= test.output
+OUTPUT= good.output bad.output
+
 
 CPPINCLUDE= -I. -I${CLASSDIR}/include/PA${ASSN} -I${CLASSDIR}/src/PA${ASSN}
 
-
-FFLAGS= -d -ocool-lex.cc
+BFLAGS = -d -v -y -b cool --debug -p cool_yy
 
 CC=g++
-CFLAGS= -g -Wall -Wno-unused -Wno-write-strings ${CPPINCLUDE}
+CFLAGS=-g -Wall -Wno-unused -Wno-deprecated -Wno-write-strings -DDEBUG ${CPPINCLUDE}
 FLEX=flex ${FFLAGS}
+BISON= bison ${BFLAGS}
 DEPEND = ${CC} -MM ${CPPINCLUDE}
 
-
-source : ${SRC} ${TSRC} ${LSRC} ${LIBS} lsource
+source: ${SRC} ${TSRC} ${LIBS} lsource
 
 lsource: ${LSRC}
 
-${OUTPUT}:	lexer test.cl
-	@rm -f test.output
-	-./lexer test.cl >test.output 2>&1 
+${OUTPUT}:	parser good.cl bad.cl
+	@rm -f ${OUTPUT}
+	./myparser good.cl >good.output 2>&1 
+	-./myparser bad.cl >bad.output 2>&1 
 
-lexer: ${OBJS}
-	${CC} ${CFLAGS} ${OBJS} ${LIB} -o lexer
+parser: ${OBJS}
+	${CC} ${CFLAGS} ${OBJS} ${LIB} -o parser
 
 .cc.o:
 	${CC} ${CFLAGS} -c $<
 
-cool-lex.cc: cool.flex 
-	${FLEX} cool.flex
+cool-parse.cc cool-parse.h: cool.y
+	bison ${BFLAGS} cool.y
+	mv -f cool.tab.c cool-parse.cc
 
-dotest:	lexer test.cl
-	./lexer test.cl
+dotest:	parser good.cl bad.cl
+	@echo "\nRunning parser on good.cl\n"
+	-./myparser good.cl 
+	@echo "\nRunning parser on bad.cl\n"
+	-./myparser bad.cl
 
 ${LIBS}:
 	${CLASSDIR}/etc/link-object ${ASSN} $@
@@ -54,10 +63,10 @@ ${LIBS}:
 # the assignment.  They will not overwrite a file you already have.
 
 ${SRC} :								
-	${CLASSDIR}/etc/copy-skel ${ASSN} ${SRC}
+	-${CLASSDIR}/etc/copy-skel ${ASSN} ${SRC}
 
 ${LSRC} :
-	${CLASSDIR}/etc/link-shared ${ASSN} ${LSRC}
+	-${CLASSDIR}/etc/link-shared ${ASSN} ${LSRC}
 
 ${TSRC} ${CSRC}:
 	-ln -s ${CLASSDIR}/src/PA${ASSN}/$@ $@
@@ -66,17 +75,15 @@ ${HSRC}:
 	-ln -s ${CLASSDIR}/include/PA${ASSN}/$@ $@
 
 submit-clean: ${OUTPUT}
-	-rm -f *.s core ${OBJS} lexer cool-lex.cc *~ parser cgen semant
+	-rm -f *.s core ${OBJS} ${CGEN} ${HGEN} lexer *~ parser cgen semant
 
 clean :
-	-rm -f ${OUTPUT} *.s core ${OBJS} lexer cool-lex.cc *~ parser cgen semant
+	-rm -f ${OUTPUT} *.s core ${OBJS} ${CGEN} ${HGEN} lexer parser cgen semant *~ *.a *.o 
 
 clean-compile:
-	@-rm -f core ${OBJS} cool-lex.cc ${LSRC}
+	@-rm -f core ${OBJS} ${CGEN} ${HGEN} ${LSRC}
 
-%.d: %.cc ${SRC} ${LSRC}
+%.d: %.cc ${LSRC}
 	${SHELL} -ec '${DEPEND} $< | sed '\''s/\($*\.o\)[ :]*/\1 $@ : /g'\'' > $@'
 
 -include ${CFIL:.cc=.d}
-
-
