@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
 	handle_flags(argc,argv);
 
 	while (optind < argc) {
-	    fin = fopen(argv[optind], "r");
+	    fin = fopen(argv[optind], "rb");
 	    if (fin == NULL) {
 		cerr << "Could not open input file " << argv[optind] << endl;
 		exit(1);
