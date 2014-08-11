@@ -40,10 +40,11 @@ extern int verbose_flag;
 extern YYSTYPE cool_yylval;
 
 /*
- *  Add Your own definitions here
+ * comment_level: number of nested comments
+ * string_contains_null: true if the current string contains a null
  */
 int comment_level = 0;
-int error_flag = 0;
+int string_contains_null = 0;
 %}
 
 /*********************************************************************
@@ -58,6 +59,8 @@ RBRACE          "}"
 COLON           ":"
 COMMA           ","
 SEMICOLON       ";"
+
+PUNCTUATION     {LPAREN}|{RPAREN}|{LBRACE}|{RBRACE}|{COLON}|{COMMA}|{SEMICOLON}
 
 /* Operators Tokens */
 
@@ -74,33 +77,34 @@ DOT             "."
 AT              "@"
 DARROW          "=>"
 
-OPERATORS_SINGLE    {PLUS}|{SUB}|{MUL}|{DIV}|{NEG}|{EQ}|{LT}|{DOT}|{AT}|{LPAREN}|{RPAREN}|{LBRACE}|{RBRACE}|{COLON}|{COMMA}|{SEMICOLON}
+ARITHMETIC_OP   {PLUS}|{SUB}|{MUL}|{DIV}|{NEG}
+RELATIONAL_OP   {EQ}|{LT}|{DOT}|{AT}
 
 /* Keywords Tokens */
 
-CLASS       {C}{L}{A}{S}{S}
-INHERITS    {I}{N}{H}{E}{R}{I}{T}{S}
+CLASS       (?i:class)
+INHERITS    (?i:inherits)
 
-IF          {I}{F}
-THEN        {T}{H}{E}{N}
-ELSE        {E}{L}{S}{E}
-FI          {F}{I}
-WHILE       {W}{H}{I}{L}{E}
-LOOP        {L}{O}{O}{P}
-POOL        {P}{O}{O}{L}
-IN          {I}{N}
-OF          {O}{F}
-CASE        {C}{A}{S}{E}
-ESAC        {E}{S}{A}{C}
+IF          (?i:if)
+THEN        (?i:then)
+ELSE        (?i:else)
+FI          (?i:fi)
+WHILE       (?i:while)
+LOOP        (?i:loop)
+POOL        (?i:pool)
+IN          (?i:in)
+OF          (?i:of)
+CASE        (?i:case)
+ESAC        (?i:esac)
 
 
-LET         {L}{E}{T}
-NEW         {N}{E}{W}
-ISVOID      {I}{S}{V}{O}{I}{D}
-NOT         {N}{O}{T}
+LET         (?i:let)
+NEW         (?i:new)
+ISVOID      (?i:isvoid)
+NOT         (?i:not)
 
-TRUE        "t"{R}{U}{E}
-FALSE       "f"{A}{L}{S}{E}
+TRUE        "t"(?i:rue)
+FALSE       "f"(?i:alse)
 
 /* Identifiers Tokens */
 
@@ -111,35 +115,6 @@ TYPEID      [A-Z][a-zA-Z0-9_]*|"SELF_TYPE"
 /* white space */
 
 WHITE_SPACE [\ \r\f\t\v]
-
-/* internal tokens */
-
-A           [aA]
-B           [bB]
-C           [cC]
-D           [dD]
-E           [eE]
-F           [fF]
-G           [gG]
-H           [hH]
-I           [iI]
-J           [jJ]
-K           [kK]
-L           [lL]
-M           [mM]
-N           [nN]
-O           [oO]
-P           [pP]
-Q           [qQ]
-R           [rR]
-S           [sS]
-T           [tT]
-U           [uU]
-V           [vV]
-W           [wW]
-X           [xX]
-Y           [yY]
-Z           [zZ]
 
 
 %x    COMMENT_ML COMMENT_L STRING
@@ -194,8 +169,16 @@ Z           [zZ]
   *********************************************************************/
 
 {ASSIGN} {return (ASSIGN);}
-{NOT} {return (NOT);}
+{DARROW} {return (DARROW);}
 {LE} {return (LE);}
+
+ /*********************************************************************
+  * The single-character operators.
+  *********************************************************************/
+
+{PUNCTUATION} {return yytext[0];}
+{ARITHMETIC_OP} {return yytext[0];}
+{RELATIONAL_OP} {return yytext[0];}
 
  /*********************************************************************
   * Keywords are case-insensitive except for the values true and false,
@@ -216,17 +199,17 @@ Z           [zZ]
 {CASE} {return (CASE);}
 {ESAC} {return (ESAC);}
 {OF} {return (OF);}
-{DARROW} {return (DARROW);}
+{NOT} {return (NOT);}
 {NEW} {return (NEW);}
 {ISVOID} {return (ISVOID);}
 
 {TRUE} {
-    cool_yylval.boolean = 1;
+    cool_yylval.boolean = true;
     return (BOOL_CONST);
 }
 
 {FALSE} {
-    cool_yylval.boolean = 0;
+    cool_yylval.boolean = false;
     return (BOOL_CONST);
 }
 
@@ -245,8 +228,8 @@ Z           [zZ]
     return (INT_CONST);
 }
 
-{OPERATORS_SINGLE} {return yytext[0];}
-{WHITE_SPACE}+    {}
+
+
 
  /*********************************************************************
   * String constants (C syntax)
@@ -256,12 +239,12 @@ Z           [zZ]
 
 <INITIAL>\" {
     string_buf_ptr = string_buf;
-    error_flag = 0;
+    string_contains_null = false;
     BEGIN(STRING);
 }
 
 <STRING>\" {
-    if(error_flag == 0) {
+    if(string_contains_null == false) {
          *string_buf_ptr = '\0';
          if(string_buf_ptr - string_buf + 1 > MAX_STR_CONST) {
               cool_yylval.error_msg = "String constant too long";
@@ -287,7 +270,7 @@ Z           [zZ]
 <STRING>\\\\ { *string_buf_ptr++ = '\\'; }
 <STRING>\\\0 {
     cool_yylval.error_msg = "String contains escaped null character.";
-    error_flag = 1;
+    string_contains_null = true;
 }
 
 <STRING>\\\n {
@@ -308,7 +291,7 @@ Z           [zZ]
 
 <STRING>\0 {
     cool_yylval.error_msg = "String contains null character.";
-    error_flag = 1;
+    string_contains_null = true;
 }
 
 <STRING><<EOF>> {
@@ -320,8 +303,9 @@ Z           [zZ]
 <STRING>. { *string_buf_ptr++ = yytext[0]; }
 
  /*********************************************************************
-  * EOF 
+  * Everything Else
   *********************************************************************/
+{WHITE_SPACE}+    {}
 
 <<EOF>> {yyterminate();}
 
