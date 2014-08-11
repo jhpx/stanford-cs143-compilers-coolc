@@ -228,9 +228,6 @@ WHITE_SPACE [\ \r\f\t\v]
     return (INT_CONST);
 }
 
-
-
-
  /*********************************************************************
   * String constants (C syntax)
   * Escape sequence \c is accepted for all characters c. Except for
