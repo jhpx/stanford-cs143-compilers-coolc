@@ -2,7 +2,7 @@
 ASSN = 3
 CLASS= cs143
 CLASSDIR= ../class/cs143/cool
-LIB= -lfl
+LIB= -L/usr/lib -lfl
 AR= gar
 ARCHIVE_NEW= -cr
 RANLIB= gar -qs
