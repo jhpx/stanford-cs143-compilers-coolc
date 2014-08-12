@@ -10,32 +10,33 @@ RANLIB= gar -qs
 SRC= cool.y cool-tree.handcode.h good.cl bad.cl README
 CSRC= parser-phase.cc utilities.cc stringtab.cc dumptype.cc \
       tree.cc cool-tree.cc tokens-lex.cc  handle_flags.cc 
-TSRC= myparser mycoolc cool-tree.aps
+TSRC= myparser cool-tree.aps
 CGEN= cool-parse.cc
 HGEN= cool-parse.h
-LIBS= lexer semant cgen
+LIBS= lexer
 CFIL= ${CSRC} ${CGEN}
 HFIL= cool-tree.h cool-tree.handcode.h 
 LSRC= Makefile
 OBJS= ${CFIL:.cc=.o}
+DEPS= ${CFIL:.cc=.d}
 OUTPUT= good.output bad.output
 
 
 CPPINCLUDE= -I. -I${CLASSDIR}/include/PA${ASSN} -I${CLASSDIR}/src/PA${ASSN}
 
-BFLAGS = -d -v -y -b cool --debug -p cool_yy
+BFLAGS= -d -v -y -b cool --debug -p cool_yy
 
-CC=g++
-CFLAGS=-g -Wall -Wno-unused -Wno-deprecated -Wno-write-strings -DDEBUG ${CPPINCLUDE}
-FLEX=flex ${FFLAGS}
+CC= g++
+CFLAGS= -g -Wall -Wno-unused -Wno-deprecated -Wno-write-strings -DDEBUG ${CPPINCLUDE}
+FLEX= flex ${FFLAGS}
 BISON= bison ${BFLAGS}
-DEPEND = ${CC} -MM ${CPPINCLUDE}
+DEPEND= ${CC} -MM ${CPPINCLUDE}
 
-source: ${SRC} ${TSRC} ${LIBS} lsource
+source: ${SRC} ${TSRC} ${LIBS} ${CSRC} lsource
 
 lsource: ${LSRC}
 
-${OUTPUT}:	parser good.cl bad.cl
+${OUTPUT}: parser good.cl bad.cl
 	@rm -f ${OUTPUT}
 	./myparser good.cl >good.output 2>&1 
 	-./myparser bad.cl >bad.output 2>&1 
@@ -46,7 +47,7 @@ parser: ${OBJS}
 .cc.o:
 	${CC} ${CFLAGS} -c $<
 
-cool-parse.cc cool-parse.h: ${SRC} cool.y
+cool-parse.cc cool-parse.h: cool.y
 	bison ${BFLAGS} cool.y
 	mv -f cool.tab.c cool-parse.cc
 
