@@ -1,4 +1,4 @@
-#!/usr/bin/sh
+#!/bin/sh
 chmod +x class/cs143/cool/bin/.i686/*
 chmod +x class/cs143/cool/bin/* && chmod -x class/cs143/cool/bin/*.*
 chmod +x class/cs143/cool/etc/* && chmod -x class/cs143/cool/etc/*.*
