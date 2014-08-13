@@ -27,10 +27,11 @@ CFLAGS= -g -Wall -Wno-unused -Wno-write-strings ${CPPINCLUDE}
 FLEX= flex ${FFLAGS}
 DEPEND= ${CC} -MM ${CPPINCLUDE}
 
-
-source : ${SRC} ${TSRC} ${LIBS} ${CSRC} lsource
+source: ${SRC} ${TSRC} ${LIBS} ${CSRC} lsource
 
 lsource: ${LSRC}
+
+$(OBJS): ${SRC}
 
 ${OUTPUT}: lexer test.cl
 	@rm -f test.output
@@ -42,7 +43,7 @@ lexer: ${OBJS} ${DEPS}
 .cc.o:
 	${CC} ${CFLAGS} -c $<
 
-${CGEN}: cool.flex
+cool-lex.cc: cool.flex
 	${FLEX} cool.flex
 
 dotest:	lexer test.cl
@@ -67,10 +68,10 @@ ${HSRC}:
 	-ln -s ${CLASSDIR}/include/PA${ASSN}/$@ $@
 
 submit-clean: ${OUTPUT}
-	-rm -f *.s ${OBJS} lexer ${CGEN} ${DEPS} *~ ${LIBS}
+	-rm -f *.s ${OBJS} ${CGEN} ${DEPS} lexer *~
 
 clean :
-	-rm -f ${OUTPUT} *.s ${OBJS} lexer ${CGEN} ${DEPS} *~ ${LIBS}
+	-rm -f ${OUTPUT} *.s ${OBJS} ${CGEN} ${DEPS} lexer *~
 
 clean-compile:
 	@-rm -f ${OBJS} ${CGEN} ${DEPS}
