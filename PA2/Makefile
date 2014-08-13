@@ -32,7 +32,7 @@ FLEX= flex ${FFLAGS}
 BISON= bison ${BFLAGS}
 DEPEND= ${CC} -MM ${CPPINCLUDE}
 
-source: ${SRC} ${TSRC} ${LIBS} ${CSRC} lsource
+source: ${SRC} ${TSRC} ${CSRC} lsource
 
 lsource: ${LSRC}
 
@@ -61,7 +61,7 @@ dotest:	parser good.cl bad.cl
 	-./myparser bad.cl
 
 ${LIBS}:
-	-${CLASSDIR}/etc/mk-link-object ${ASSN} $@
+	${CLASSDIR}/etc/mk-link-object ${ASSN} $@
 
 # These dependencies allow you to get the starting files for
 # the assignment.  They will not overwrite a file you already have.

@@ -27,7 +27,7 @@ CFLAGS= -g -Wall -Wno-unused -Wno-write-strings ${CPPINCLUDE}
 FLEX= flex ${FFLAGS}
 DEPEND= ${CC} -MM ${CPPINCLUDE}
 
-source: ${SRC} ${TSRC} ${LIBS} ${CSRC} lsource
+source: ${SRC} ${TSRC} ${CSRC} lsource
 
 lsource: ${LSRC}
 
@@ -50,7 +50,7 @@ dotest:	lexer test.cl
 	./lexer test.cl
 
 ${LIBS}:
-	-${CLASSDIR}/etc/link-object ${ASSN} $@
+	${CLASSDIR}/etc/mk-link-object ${ASSN} $@
 
 # These dependencies allow you to get the starting files for
 # the assignment.  They will not overwrite a file you already have.
