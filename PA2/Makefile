@@ -36,14 +36,14 @@ source: ${SRC} ${TSRC} ${LIBS} ${CSRC} lsource
 
 lsource: ${LSRC}
 
-$(OBJS): ${SRC}
+${OBJS}: ${SRC} ${TSRC}
 
 ${OUTPUT}: parser good.cl bad.cl
 	@rm -f ${OUTPUT}
 	./myparser good.cl >good.output 2>&1
 	-./myparser bad.cl >bad.output 2>&1
 
-parser: ${OBJS} ${DEPS}
+parser: ${OBJS} ${LIBS} ${DEPS}
 	${CC} ${CFLAGS} ${OBJS} ${LIB} -o parser
 
 

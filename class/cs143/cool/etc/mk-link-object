@@ -1,0 +1,27 @@
+##!/bin/sh
+
+PRG=$0
+num=$1
+
+if [ `command -v dir 2>&1` ]; then
+  os='Win32'
+elif [ `command -v defaults 2>&1` ]; then
+  os='MacOS'
+elif [ `command -v apt 2>&1` ]; then
+  os='debian-like'
+else
+  os='others'
+fi
+shift
+if [ $os = 'debian-like' ]; then
+  ${COOL_INST}/etc/link-object $num $@
+else
+  for f
+  do
+    num=$[num-2]
+    if [ $[num] -gt 0 ]; then
+      cp ../PA$num/$f .
+    fi
+  done
+  
+fi
