@@ -31,16 +31,14 @@ source: ${SRC} ${TSRC} ${CSRC} lsource
 
 lsource: ${LSRC}
 
-${OBJS}: ${SRC} ${TSRC}
-
 ${OUTPUT}: lexer test.cl
 	@rm -f test.output
 	-./lexer test.cl >test.output 2>&1
 
-lexer: ${OBJS} ${LIBS} ${DEPS}
+lexer: ${OBJS} ${TSRC} ${LIBS} ${DEPS}
 	${CC} ${CFLAGS} ${OBJS} ${LIB} -o lexer
 
-.cc.o:
+%.o: %.cc
 	${CC} ${CFLAGS} -c $<
 
 cool-lex.cc: cool.flex
@@ -55,10 +53,10 @@ ${LIBS}:
 # These dependencies allow you to get the starting files for
 # the assignment.  They will not overwrite a file you already have.
 
-${SRC} :
+${SRC}:
 	-${CLASSDIR}/etc/copy-skel ${ASSN} ${SRC}
 
-${LSRC} :
+${LSRC}:
 	-${CLASSDIR}/etc/link-shared ${ASSN} ${LSRC}
 
 ${TSRC} ${CSRC}:
@@ -70,11 +68,12 @@ ${HSRC}:
 submit-clean: ${OUTPUT}
 	-rm -f *.s ${OBJS} ${CGEN} ${DEPS} lexer *~
 
-clean :
+clean:
 	-rm -f ${OUTPUT} *.s ${OBJS} ${CGEN} ${DEPS} lexer *~
 
 clean-compile:
 	@-rm -f ${OBJS} ${CGEN} ${DEPS}
 
-%.d: %.cc ${SRC} ${LSRC}
+%.d: %.cc ${LSRC}
 	${SHELL} -ec '${DEPEND} $< | sed '\''s/\($*\.o\)[ :]*/\1 $@ : /g'\'' > $@'
+-include ${CSRC:.cc=.d}
