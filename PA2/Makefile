@@ -11,7 +11,7 @@ SRC= cool.y cool-tree.handcode.h good.cl bad.cl README
 CSRC= parser-phase.cc utilities.cc stringtab.cc dumptype.cc \
       tree.cc cool-tree.cc tokens-lex.cc  handle_flags.cc
 TSRC= myparser cool-tree.aps
-HSRC= cool-tree.h cool-tree.handcode.h
+HSRC=
 CGEN= cool-parse.cc
 HGEN= cool-parse.h
 LIBS= lexer
@@ -45,7 +45,7 @@ ${OUTPUT}: parser good.cl bad.cl
 parser: ${OBJS} ${TSRC} ${LIBS} ${DEPS}
 	${CC} ${CFLAGS} ${OBJS} ${LIB} -o parser
 
-.cc.o:
+%.o: %.cc
 	${CC} ${CFLAGS} -c $<
 
 cool-parse.cc: cool.y
@@ -63,10 +63,10 @@ ${LIBS}:
 # These dependencies allow you to get the starting files for
 # the assignment.  They will not overwrite a file you already have.
 
-${SRC} :
+${SRC}:
 	-${CLASSDIR}/etc/copy-skel ${ASSN} ${SRC}
 
-${LSRC} :
+${LSRC}:
 	-${CLASSDIR}/etc/link-shared ${ASSN} ${LSRC}
 
 ${TSRC} ${CSRC}:
@@ -78,13 +78,13 @@ ${HSRC}:
 submit-clean: ${OUTPUT}
 	-rm -f *.s ${OBJS} ${CGEN} ${HGEN} ${DEPS} lexer parser *~
 
-clean :
+clean:
 	-rm -f ${OUTPUT} *.s ${OBJS} ${CGEN} ${HGEN} ${DEPS} lexer parser *~
 
 clean-compile:
 	@-rm -f ${OBJS} ${CGEN} ${HGEN} ${DEPS}
 
-%.d: %.cc ${HSRC} ${LSRC}
+%.d: %.cc cool-tree.handcode.h ${LSRC}
 	${SHELL} -ec '${DEPEND} $< | sed '\''s/\($*\.o\)[ :]*/\1 $@ : /g'\'' > $@'
 
 -include ${CSRC:.cc=.d}
