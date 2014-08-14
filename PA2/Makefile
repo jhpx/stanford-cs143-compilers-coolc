@@ -11,11 +11,12 @@ SRC= cool.y cool-tree.handcode.h good.cl bad.cl README
 CSRC= parser-phase.cc utilities.cc stringtab.cc dumptype.cc \
       tree.cc cool-tree.cc tokens-lex.cc  handle_flags.cc
 TSRC= myparser cool-tree.aps
+HSRC= cool-tree.h cool-tree.handcode.h
 CGEN= cool-parse.cc
 HGEN= cool-parse.h
 LIBS= lexer
 CFIL= ${CSRC} ${CGEN}
-HFIL= cool-tree.h cool-tree.handcode.h
+
 LSRC= Makefile
 OBJS= ${CFIL:.cc=.o}
 DEPS= ${CFIL:.cc=.d}
@@ -36,22 +37,18 @@ source: ${SRC} ${TSRC} ${CSRC} lsource
 
 lsource: ${LSRC}
 
-${OBJS}: ${SRC} ${TSRC}
-
 ${OUTPUT}: parser good.cl bad.cl
 	@rm -f ${OUTPUT}
 	./myparser good.cl >good.output 2>&1
 	-./myparser bad.cl >bad.output 2>&1
 
-parser: ${OBJS} ${LIBS} ${DEPS}
+parser: ${OBJS} ${TSRC} ${LIBS} ${DEPS}
 	${CC} ${CFLAGS} ${OBJS} ${LIB} -o parser
-
-
 
 .cc.o:
 	${CC} ${CFLAGS} -c $<
 
-cool-parse.cc cool-parse.h: cool.y
+cool-parse.cc: cool.y
 	bison ${BFLAGS} cool.y
 
 dotest:	parser good.cl bad.cl
@@ -87,5 +84,7 @@ clean :
 clean-compile:
 	@-rm -f ${OBJS} ${CGEN} ${HGEN} ${DEPS}
 
-%.d: %.cc ${SRC} ${LSRC}
+%.d: %.cc ${HSRC} ${LSRC}
 	${SHELL} -ec '${DEPEND} $< | sed '\''s/\($*\.o\)[ :]*/\1 $@ : /g'\'' > $@'
+
+-include ${CSRC:.cc=.d}

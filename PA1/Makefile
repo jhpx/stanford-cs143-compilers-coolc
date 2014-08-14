@@ -31,13 +31,11 @@ source: ${SRC} ${TSRC} ${CSRC} lsource
 
 lsource: ${LSRC}
 
-${OBJS}: ${SRC} ${TSRC}
-
 ${OUTPUT}: lexer test.cl
 	@rm -f test.output
 	-./lexer test.cl >test.output 2>&1
 
-lexer: ${OBJS} ${LIBS} ${DEPS}
+lexer: ${OBJS} ${TSRC} ${LIBS} ${DEPS}
 	${CC} ${CFLAGS} ${OBJS} ${LIB} -o lexer
 
 .cc.o:
@@ -76,5 +74,6 @@ clean :
 clean-compile:
 	@-rm -f ${OBJS} ${CGEN} ${DEPS}
 
-%.d: %.cc ${SRC} ${LSRC}
+%.d: %.cc ${HSRC} ${LSRC}
 	${SHELL} -ec '${DEPEND} $< | sed '\''s/\($*\.o\)[ :]*/\1 $@ : /g'\'' > $@'
+-include ${CSRC:.cc=.d}

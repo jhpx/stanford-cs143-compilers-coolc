@@ -40,13 +40,13 @@
     * (fictional) construct that matches a plus between two integer constants.
     * (SUCH A RULE SHOULD NOT BE  PART OF YOUR PARSER):
 
-    plus_consts	: INT_CONST '+' INT_CONST
+    plus_consts : INT_CONST '+' INT_CONST
 
     * where INT_CONST is a terminal for an integer constant. Now, a correct
     * action for this rule that attaches the correct line number to plus_const
     * would look like the following:
 
-    plus_consts	: INT_CONST '+' INT_CONST
+    plus_consts : INT_CONST '+' INT_CONST
     {
       // Set the line number of the current non-terminal:
       // ***********************************************
@@ -80,7 +80,7 @@
     /************************************************************************/
     /*                DONT CHANGE ANYTHING IN THIS SECTION                  */
 
-    Program ast_root;	      /* the result of the parse  */
+    Program ast_root;             /* the result of the parse  */
     Classes parse_results;        /* for use in semantic analysis */
     int omerrs = 0;               /* number of errors in lexing and parsing */
     %}
@@ -133,8 +133,6 @@
     %type <program> program
     %type <classes> class_list
     %type <class_> class
-
-    /* You will want to change the following line. */
     %type <features> feature_list
     %type <feature> feature
     %type <formals> formal_list
@@ -143,11 +141,11 @@
     %type <case_> case
     %type <expressions> expression_list expression_list_2
     %type <expression> expression let_extra
-    /* %type <error_msg> error_msg */
 
     /* Precedence declarations go here. */
+    /* NOTE: the operator with the highest priority goes to the last of the list */
     %right IN
-    %right ASSIGN
+    %right ASSIGN /* The only right-associative operator */
     %left NOT
     %nonassoc LE '<' '='
     %left '+' '-'
@@ -158,23 +156,31 @@
     %left '.'
 
     %%
-    /*
-    Save the root of the abstract syntax tree in a global variable.
-    */
-    program	: class_list	{ @$ = @1; ast_root = program($1); }
+    /*********************************************************************
+     * Program
+     * Save the root of the abstract syntax tree in a global variable.
+     *********************************************************************/
+    program
+    : class_list
+    { @$ = @1; ast_root = program($1); }
     ;
 
-    /***********************Class********************************/
+    /*********************************************************************
+     * Classes
+     *
+     *********************************************************************/
     class_list
     : class			/* single class */
-    { $$ = single_Classes($1);
-    parse_results = $$; }
+    { $$ = single_Classes($1); parse_results = $$; }
     | class_list class	/* several classes */
     { $$ = append_Classes($1,single_Classes($2));
     parse_results = $$; }
     ;
 
-    /* If no parent is specified, the class inherits from the Object class. */
+    /*********************************************************************
+     * Class
+     * If no parent is specified, the class inherits from the Object class.
+     *********************************************************************/
     class
     : CLASS TYPEID '{' feature_list '}' ';'
     { $$ = class_($2,idtable.add_string("Object"),$4,
@@ -355,11 +361,6 @@
     : OBJECTID
     { $$ = object($1); }
     ;
-
-    /* error_msg
-    : ERROR
-    {}
-    ; */
 
     /* end of grammar */
     %%
