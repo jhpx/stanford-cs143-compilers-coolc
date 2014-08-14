@@ -158,6 +158,8 @@
     %%
     /*********************************************************************
      * Program
+     *
+     * Program ::= Classes
      * Save the root of the abstract syntax tree in a global variable.
      *********************************************************************/
     program
@@ -168,17 +170,21 @@
     /*********************************************************************
      * Classes
      *
+     * Classes ::= [[Class;]]+
+     * Have a Class at least.
      *********************************************************************/
     class_list
-    : class			/* single class */
+    : class                 /* single class */
     { $$ = single_Classes($1); parse_results = $$; }
-    | class_list class	/* several classes */
+    | class_list class      /* several classes */
     { $$ = append_Classes($1,single_Classes($2));
     parse_results = $$; }
     ;
 
     /*********************************************************************
      * Class
+     *
+     * Class ::= class TYPE [inherits TYPE] {[[Feature;]]∗}
      * If no parent is specified, the class inherits from the Object class.
      *********************************************************************/
     class
@@ -191,14 +197,25 @@
     {}
     ;
 
-    /***********************Feature********************************/
+    /*********************************************************************
+     * Features
+     *
+     * Features ::= [[Feature;]]*
+     * Can be empty.
+     *********************************************************************/
     feature_list
-    : 			/* empty*/
+    :                         /* empty*/
     { $$ = nil_Features();}
-    | feature_list feature	/* several features */
+    | feature_list feature    /* several features */
     { $$ = append_Features($1,single_Features($2)); }
     ;
 
+    /*********************************************************************
+     * Feature
+     *
+     * Feature ::= ID([Formal [[,Formal]]∗]) : TYPE { Expr }
+     *           | ID : TYPE [ <- Expr ]
+     *********************************************************************/
     feature
     : OBJECTID '(' ')' ':' TYPEID '{' expression '}' ';'
     { $$ = method($1,nil_Formals(),$5,$7); }
@@ -212,27 +229,47 @@
     {}
     ;
 
-    /***********************Formal********************************/
+    /*********************************************************************
+     * Formals
+     *
+     * Formals ::= [[Formal;]]+
+     * Have a Formal at least.
+     *********************************************************************/
     formal_list
-    : formal	/* single formal */
+    : formal                    /* single formal */
     { $$ = single_Formals($1);}
-    | formal_list ',' formal	/* several formals */
+    | formal_list ',' formal    /* several formals */
     { $$ = append_Formals($1,single_Formals($3)); }
     ;
 
+    /*********************************************************************
+     * Formal
+     *
+     * Formal ::= ID : TYPE
+     *********************************************************************/
     formal
     : OBJECTID ':' TYPEID
     { $$ = formal($1,$3); }
     ;
 
-    /***********************Case********************************/
+    /*********************************************************************
+     * Cases
+     *
+     * Cases ::= [[Case;]]+
+     * Have a Case at least.
+     *********************************************************************/
     case_list
-    : case	/* single case */
+    : case              /* single case */
     { $$ = single_Cases($1);}
-    | case_list case	/* several cases */
+    | case_list case    /* several cases */
     { $$ = append_Cases($1,single_Cases($2)); }
     ;
 
+    /*********************************************************************
+     * Case
+     *
+     * Case ::=  case expr of [[ID : TYPE => expr; ]]+ esac
+     *********************************************************************/
     case
     : OBJECTID ':' TYPEID DARROW expression ';'
     { $$ = branch($1,$3,$5); }
@@ -240,19 +277,19 @@
 
     /***********************Expression********************************/
     expression_list
-    : expression	/* single expression */
+    : expression    /* single expression */
     { $$ = single_Expressions($1);}
-    | expression_list ',' expression	/* several expressions */
+    | expression_list ',' expression    /* several expressions */
     { $$ = append_Expressions($1,single_Expressions($3)); }
     ;
 
 
-    expression	/* assignment */
+    expression    /* assignment */
     : OBJECTID ASSIGN expression
     { $$ = assign($1,$3); }
     ;
 
-    expression	/* dispatch */
+    expression    /* dispatch */
     : expression '.' OBJECTID '(' ')'
     { $$ = dispatch($1,$3,nil_Expressions()); }
     | expression '.' OBJECTID '(' expression_list ')'
@@ -283,9 +320,9 @@
     ;
 
     expression_list_2
-    : expression ';'	/* single expression */
+    : expression ';'    /* single expression */
     { $$ = single_Expressions($1);}
-    | expression_list_2 expression ';'	/* several expressions */
+    | expression_list_2 expression ';'    /* several expressions */
     { $$ = append_Expressions($1,single_Expressions($2)); }
     | error ';'
     {}
@@ -348,7 +385,7 @@
     { $$ = $2; }
     ;
 
-    expression	/* constants */
+    expression    /* constants */
     : INT_CONST
     { $$ = int_const($1); }
     | BOOL_CONST

@@ -25,7 +25,7 @@ OUTPUT= good.output bad.output
 
 CPPINCLUDE= -I. -I${CLASSDIR}/include/PA${ASSN} -I${CLASSDIR}/src/PA${ASSN}
 
-BFLAGS= -d -v -y -o cool-parse.cc --debug -p cool_yy
+BFLAGS= --define=cool-parse.h -v -y -o cool-parse.cc --debug -p cool_yy
 
 CC= g++
 CFLAGS= -g -Wall -Wno-unused -Wno-deprecated -Wno-write-strings -DDEBUG ${CPPINCLUDE}
