@@ -299,9 +299,9 @@
     | expression '@' TYPEID '.' OBJECTID '(' expression_list ')'
     { $$ = static_dispatch($1,$3,$5,$7); }
     | OBJECTID '(' ')'
-    { $$ = dispatch(object(idtable.add_string("Self")),$1,nil_Expressions()); }
+    { $$ = dispatch(object(idtable.add_string("self")),$1,nil_Expressions()); }
     | OBJECTID '(' expression_list ')'
-    { $$ = dispatch(object(idtable.add_string("Self")),$1,$3); }
+    { $$ = dispatch(object(idtable.add_string("self")),$1,$3); }
     ;
 
     expression /* conditionals */
