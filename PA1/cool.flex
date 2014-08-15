@@ -130,7 +130,7 @@ WHITE_SPACE [\ \r\f\t\v]
 
 <COMMENT_L>"\n" {
     curr_lineno++;
-    if(comment_level>0)
+    if (comment_level>0)
         BEGIN(COMMENT_ML);
     else
         BEGIN(INITIAL);
@@ -241,22 +241,21 @@ WHITE_SPACE [\ \r\f\t\v]
 }
 
 <STRING>\" {
-    if(string_contains_null == false) {
-         *string_buf_ptr = '\0';
-         if(string_buf_ptr - string_buf + 1 > MAX_STR_CONST) {
-              cool_yylval.error_msg = "String constant too long";
-              BEGIN(INITIAL);
-              return (ERROR);
-              }
-         else {
-         cool_yylval.symbol = stringtable.add_string(string_buf,MAX_STR_CONST);
-         BEGIN(INITIAL);
-         return (STR_CONST);
-         }
+    if (string_contains_null == false) {
+        *string_buf_ptr = '\0';
+        if (string_buf_ptr - string_buf + 1 > MAX_STR_CONST) {
+            cool_yylval.error_msg = strdup("String constant too long");
+            BEGIN(INITIAL);
+            return (ERROR);
+        }
+        else {
+            cool_yylval.symbol = stringtable.add_string(string_buf,MAX_STR_CONST);
+            BEGIN(INITIAL);
+            return (STR_CONST);
+        }
     }
     else {
         BEGIN(INITIAL);
-        return (ERROR);
     }
 }
 
@@ -266,8 +265,9 @@ WHITE_SPACE [\ \r\f\t\v]
 <STRING>\\f { *string_buf_ptr++ = '\f'; }
 <STRING>\\\\ { *string_buf_ptr++ = '\\'; }
 <STRING>\\\0 {
-    cool_yylval.error_msg = "String contains escaped null character.";
+    cool_yylval.error_msg = strdup("String contains escaped null character.");
     string_contains_null = true;
+    return (ERROR);
 }
 
 <STRING>\\\n {
@@ -277,22 +277,28 @@ WHITE_SPACE [\ \r\f\t\v]
 
 <STRING>\\\"  { *string_buf_ptr++ = '\"'; }
 
+<STRING>\0 {
+    cool_yylval.error_msg = strdup("String contains null character.");
+    string_contains_null = true;
+    return (ERROR);
+}
+
 <STRING>\n {
     curr_lineno++;
-    cool_yylval.error_msg = "Unterminated string constant";
     BEGIN(INITIAL);
-    return (ERROR);
+    if (!string_contains_null) {
+        cool_yylval.error_msg = strdup("Unterminated string constant");
+        return (ERROR);
+    }
+
+
 }
 
 <STRING>\\. { *string_buf_ptr++ = yytext[1]; }
 
-<STRING>\0 {
-    cool_yylval.error_msg = "String contains null character.";
-    string_contains_null = true;
-}
 
 <STRING><<EOF>> {
-    cool_yylval.error_msg = ("EOF in string constant");
+    cool_yylval.error_msg = strdup("EOF in string constant");
     BEGIN(INITIAL);
     return (ERROR);
 }
