@@ -3,10 +3,8 @@
 shift
 for f
 do
-  if [ $num -gt 0 ]; then
-    dir=`pwd | sed 's/^.*\///'`
-    num=$((`awk '{if(match($0,/[0-9]+/)) print substr($0,RSTART,RLENGTH)}' ${dir}`-1))
-    ln -s ../`sed 's/[0-9]+/${num}/' ${dir}`/$f .
-  fi
+    prefix=`pwd | sed -n 's/^.*\/\([^0-9]\+\)\([0-9]\+\).*/\1/p'`
+    num=$((`pwd | sed 's/^.*\///'| grep -o "[0-9]\+"`-1))
+    ln -s -f ../${prefix}${num}/$f .
 done
 
