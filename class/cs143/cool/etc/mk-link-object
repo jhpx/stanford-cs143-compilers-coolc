@@ -1,27 +1,12 @@
 #!/bin/sh
 
-PRG=$0
-num=$1
-
-if [ `command -v dir 2>&1` ]; then
-  os='Win32'
-elif [ `command -v defaults 2>&1` ]; then
-  os='MacOS'
-elif [ `command -v apt 2>&1` ]; then
-  os='debian-like'
-else
-  os='others'
-fi
 shift
-if [ $os = 'debian-like' ]; then
-  ${COOL_INST}/etc/link-object $num $@
-else
-  for f
-  do
-    num=$(($num-2))
-    if [ $num -gt 0 ]; then
-      cp ../PA$num/$f .
-    fi
-  done
+for f
+do
+  if [ $num -gt 0 ]; then
+    dir=`pwd | sed 's/^.*\///'`
+    num=$((`awk '{if(match($0,/[0-9]+/)) print substr($0,RSTART,RLENGTH)}' ${dir}`-1))
+    ln -s ../`sed 's/[0-9]+/${num}/' ${dir}`/$f .
+  fi
+done
 
-fi
