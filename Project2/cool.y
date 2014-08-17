@@ -139,11 +139,12 @@
     %type <formal> formal
     %type <cases> case_list
     %type <case_> case
-    %type <expressions> expression_list expression_list_2
-    %type <expression> expression let_extra
+    %type <expressions> expr_list_comma expr_list_semicolon
+    %type <expression> expr let_extra
 
     /* Precedence declarations go here. */
-    /* NOTE: the operator with the highest priority goes to the last of the list */
+    /* NOTE: the operator with the highest priority goes to the last of
+       the list */
     %right IN
     %right ASSIGN /* The only right-associative operator */
     %left NOT
@@ -164,7 +165,7 @@
      *********************************************************************/
     program
     : class_list
-    { @$ = @1; ast_root = program($1); }
+    { @$ = @1; SET_NODELOC(@1); ast_root = program($1); }
     ;
 
     /*********************************************************************
@@ -174,26 +175,31 @@
      * Have a Class at least.
      *********************************************************************/
     class_list
-    : class                 /* single class */
-    { $$ = single_Classes($1); parse_results = $$; }
-    | class_list class      /* several classes */
-    { $$ = append_Classes($1,single_Classes($2));
+    : class ';'                /* single class */
+    { @$ = @2; SET_NODELOC(@2);
+      $$ = single_Classes($1); parse_results = $$; }
+    | class_list class ';'     /* several classes */
+    { @$ = @3; SET_NODELOC(@3);
+      $$ = append_Classes($1,single_Classes($2));
     parse_results = $$; }
     ;
 
     /*********************************************************************
      * Class
      *
-     * Class ::= class TYPE [inherits TYPE] {[[Feature;]]∗}
+     * Class ::= class TYPE [inherits TYPE] { Features }
      * If no parent is specified, the class inherits from the Object class.
      *********************************************************************/
     class
-    : CLASS TYPEID '{' feature_list '}' ';'
-    { $$ = class_($2,idtable.add_string("Object"),$4,
-    stringtable.add_string(curr_filename)); }
-    | CLASS TYPEID INHERITS TYPEID '{' feature_list '}' ';'
-    { $$ = class_($2,$4,$6,stringtable.add_string(curr_filename)); }
-    | error ';'
+    : CLASS TYPEID '{' feature_list '}'
+    { @$ = @5; SET_NODELOC(@5);
+      $$ = class_($2,idtable.add_string("Object"),$4,
+                  stringtable.add_string(curr_filename)); }
+    | CLASS TYPEID INHERITS TYPEID '{' feature_list '}'
+    { @$ = @7; SET_NODELOC(@7);
+      $$ = class_($2,$4,$6,
+                  stringtable.add_string(curr_filename)); }
+    | error
     {}
     ;
 
@@ -204,42 +210,45 @@
      * Can be empty.
      *********************************************************************/
     feature_list
-    :                         /* empty*/
+    :                            /* empty*/
     { $$ = nil_Features();}
-    | feature_list feature    /* several features */
-    { $$ = append_Features($1,single_Features($2)); }
+    | feature_list feature ';'   /* several features */
+    { @$ = @3; SET_NODELOC(@3);
+      $$ = append_Features($1,single_Features($2)); }
     ;
 
     /*********************************************************************
      * Feature
      *
-     * Feature ::= ID([Formal [[,Formal]]∗]) : TYPE { Expr }
+     * Feature ::= ID([ Formals ]) : TYPE { Expr }
      *           | ID : TYPE [ <- Expr ]
      *********************************************************************/
     feature
-    : OBJECTID '(' ')' ':' TYPEID '{' expression '}' ';'
-    { $$ = method($1,nil_Formals(),$5,$7); }
-    | OBJECTID '(' formal_list ')' ':' TYPEID '{' expression '}' ';'
-    { $$ = method($1,$3,$6,$8); }
-    | OBJECTID ':' TYPEID ';'
-    { $$ = attr($1,$3,no_expr()); }
-    | OBJECTID ':' TYPEID ASSIGN expression ';'
-    { $$ = attr($1,$3,$5); }
-    | error ';'
+    : OBJECTID '(' ')' ':' TYPEID '{' expr '}'
+    { @$ = @8; SET_NODELOC(@8); $$ = method($1,nil_Formals(),$5,$7); }
+    | OBJECTID '(' formal_list ')' ':' TYPEID '{' expr '}'
+    { @$ = @9; SET_NODELOC(@9); $$ = method($1,$3,$6,$8); }
+    | OBJECTID ':' TYPEID
+    { @$ = @3; SET_NODELOC(@3); $$ = attr($1,$3,no_expr()); }
+    | OBJECTID ':' TYPEID ASSIGN expr
+    { @$ = @5; SET_NODELOC(@5); $$ = attr($1,$3,$5); }
+    | error
     {}
     ;
 
     /*********************************************************************
      * Formals
      *
-     * Formals ::= [[Formal;]]+
+     * Formals ::= Formal [[,Formal]]*
      * Have a Formal at least.
      *********************************************************************/
     formal_list
     : formal                    /* single formal */
-    { $$ = single_Formals($1);}
+    { @$ = @1; SET_NODELOC(@1);
+      $$ = single_Formals($1);}
     | formal_list ',' formal    /* several formals */
-    { $$ = append_Formals($1,single_Formals($3)); }
+    { @$ = @3; SET_NODELOC(@3);
+      $$ = append_Formals($1,single_Formals($3)); }
     ;
 
     /*********************************************************************
@@ -249,7 +258,7 @@
      *********************************************************************/
     formal
     : OBJECTID ':' TYPEID
-    { $$ = formal($1,$3); }
+    { @$ = @3; SET_NODELOC(@3); $$ = formal($1,$3); }
     ;
 
     /*********************************************************************
@@ -259,133 +268,218 @@
      * Have a Case at least.
      *********************************************************************/
     case_list
-    : case              /* single case */
-    { $$ = single_Cases($1);}
-    | case_list case    /* several cases */
-    { $$ = append_Cases($1,single_Cases($2)); }
+    : case ';'             /* single case */
+    { @$ = @2; SET_NODELOC(@2); $$ = single_Cases($1);}
+    | case_list case ';'   /* several cases */
+    { @$ = @3; SET_NODELOC(@3);
+      $$ = append_Cases($1,single_Cases($2)); }
     ;
 
     /*********************************************************************
      * Case
      *
-     * Case ::=  case expr of [[ID : TYPE => expr; ]]+ esac
+     * Case ::=  ID : TYPE => Expr;
      *********************************************************************/
     case
-    : OBJECTID ':' TYPEID DARROW expression ';'
-    { $$ = branch($1,$3,$5); }
+    : OBJECTID ':' TYPEID DARROW expr
+    { @$ = @5; SET_NODELOC(@5); $$ = branch($1,$3,$5); }
     ;
 
-    /***********************Expression********************************/
-    expression_list
-    : expression    /* single expression */
-    { $$ = single_Expressions($1);}
-    | expression_list ',' expression    /* several expressions */
-    { $$ = append_Expressions($1,single_Expressions($3)); }
-    ;
-
-
-    expression    /* assignment */
-    : OBJECTID ASSIGN expression
-    { $$ = assign($1,$3); }
-    ;
-
-    expression    /* dispatch */
-    : expression '.' OBJECTID '(' ')'
-    { $$ = dispatch($1,$3,nil_Expressions()); }
-    | expression '.' OBJECTID '(' expression_list ')'
-    { $$ = dispatch($1,$3,$5); }
-    | expression '@' TYPEID '.' OBJECTID '(' ')'
-    { $$ = static_dispatch($1,$3,$5,nil_Expressions()); }
-    | expression '@' TYPEID '.' OBJECTID '(' expression_list ')'
-    { $$ = static_dispatch($1,$3,$5,$7); }
-    | OBJECTID '(' ')'
-    { $$ = dispatch(object(idtable.add_string("self")),$1,nil_Expressions()); }
-    | OBJECTID '(' expression_list ')'
-    { $$ = dispatch(object(idtable.add_string("self")),$1,$3); }
-    ;
-
-    expression /* conditionals */
-    : IF expression THEN expression ELSE expression FI
-    { $$ = cond($2,$4,$6); }
-    ;
-
-    expression /* loops */
-    : WHILE expression LOOP expression POOL
-    { $$ = loop($2,$4); }
-    ;
-
-    expression /* blocks */
-    : '{' expression_list_2 '}'
-    { $$ = block($2); }
-    ;
-
-    expression_list_2
-    : expression ';'    /* single expression */
-    { $$ = single_Expressions($1);}
-    | expression_list_2 expression ';'    /* several expressions */
-    { $$ = append_Expressions($1,single_Expressions($2)); }
+    /*********************************************************************
+     * Expressions - semicolon
+     *
+     * Expressions ::=  [[Expr;]]+
+     *********************************************************************/
+    expr_list_semicolon
+    : expr ';'                      /* single expression */
+    { @$ = @2; SET_NODELOC(@2); $$ = single_Expressions($1);}
+    | expr_list_semicolon expr ';'    /* several expressions */
+    { @$ = @3; SET_NODELOC(@3);
+      $$ = append_Expressions($1,single_Expressions($2)); }
     | error ';'
     {}
     ;
 
-    expression /* let */
+    /*********************************************************************
+     * Expressions - comma
+     *
+     * Expressions ::= Expr [[, Expr]]∗
+     *********************************************************************/
+    expr_list_comma
+    : expr                        /* single expression */
+    { @$ = @1; SET_NODELOC(@1); $$ = single_Expressions($1);}
+    | expr_list_comma ',' expr    /* several expressions */
+    { @$ = @3; SET_NODELOC(@3);
+      $$ = append_Expressions($1,single_Expressions($3)); }
+    ;
+
+
+    /*********************************************************************
+     * Expr - assignment
+     *
+     * Expr ::= ID <- Expr
+     *********************************************************************/
+    expr
+    : OBJECTID ASSIGN expr
+    { @$ = @3; SET_NODELOC(@3); $$ = assign($1,$3); }
+    ;
+
+    /*********************************************************************
+     * Expr - dispatch
+     *
+     * Expr ::= Expr[@TYPE].ID( [ Expr [[, Expr]]∗ ] )
+     *        | ID( [ Expr [[, Expr]]∗ ] )
+     *********************************************************************/
+    expr
+    : expr '.' OBJECTID '(' ')'
+    { @$ = @5; SET_NODELOC(@5);
+      $$ = dispatch($1,$3,nil_Expressions()); }
+    | expr '.' OBJECTID '(' expr_list_comma ')'
+    { @$ = @6; SET_NODELOC(@6);
+      $$ = dispatch($1,$3,$5); }
+    | expr '@' TYPEID '.' OBJECTID '(' ')'
+    { @$ = @7; SET_NODELOC(@7);
+      $$ = static_dispatch($1,$3,$5,nil_Expressions()); }
+    | expr '@' TYPEID '.' OBJECTID '(' expr_list_comma ')'
+    { @$ = @8; SET_NODELOC(@8);
+      $$ = static_dispatch($1,$3,$5,$7); }
+    | OBJECTID '(' ')'
+    { @$ = @3; SET_NODELOC(@3);
+      $$ = dispatch(object(idtable.add_string("self")),$1,nil_Expressions()); }
+    | OBJECTID '(' expr_list_comma ')'
+    { @$ = @4; SET_NODELOC(@4);
+      $$ = dispatch(object(idtable.add_string("self")),$1,$3); }
+    ;
+
+    /*********************************************************************
+     * Expr - conditions
+     *
+     * Expr ::= if Expr then Expr else Expr ﬁ
+     *********************************************************************/
+    expr
+    : IF expr THEN expr ELSE expr FI
+    { @$ = @7; SET_NODELOC(@7); $$ = cond($2,$4,$6); }
+    ;
+
+    /*********************************************************************
+     * Expr - loops
+     *
+     * Expr ::= while Expr loop Expr pool
+     *********************************************************************/
+    expr
+    : WHILE expr LOOP expr POOL
+    { @$ = @5; SET_NODELOC(@5); $$ = loop($2,$4); }
+    ;
+
+    /*********************************************************************
+     * Expr - blocks
+     *
+     * Expr ::= while Expr loop Expr pool
+     *********************************************************************/
+    expr
+    : '{' expr_list_semicolon '}'
+    { @$ = @3; SET_NODELOC(@3); $$ = block($2); }
+    ;
+
+    /*********************************************************************
+     * Expr - let
+     *
+     * Expr ::= let ID : TYPE [ <- expr ] [[, ID : TYPE [ <- expr ]]]∗ in expr
+     *********************************************************************/
+    expr
     : LET OBJECTID ':' TYPEID let_extra
-    { $$ = let($2,$4,no_expr(),$5); }
-    | LET OBJECTID ':' TYPEID ASSIGN expression let_extra
-    { $$ = let($2,$4,$6,$7); }
-    | LET error IN expression
+    { @$ = @5; SET_NODELOC(@5); $$ = let($2,$4,no_expr(),$5); }
+    | LET OBJECTID ':' TYPEID ASSIGN expr let_extra
+    { @$ = @7; SET_NODELOC(@7); $$ = let($2,$4,$6,$7); }
+    | LET error IN expr
     {}
     ;
 
     let_extra
-    : IN expression
-    { $$ = $2; }
+    : IN expr
+    { @$ = @2; SET_NODELOC(@2); $$ = $2; }
     | ',' OBJECTID ':' TYPEID let_extra
-    { $$ = let($2,$4,no_expr(),$5); }
-    | ',' OBJECTID ':' TYPEID ASSIGN expression let_extra
-    { $$ = let($2,$4,$6,$7); }
+    { @$ = @5; SET_NODELOC(@5); $$ = let($2,$4,no_expr(),$5); }
+    | ',' OBJECTID ':' TYPEID ASSIGN expr let_extra
+    { @$ = @7; SET_NODELOC(@7); $$ = let($2,$4,$6,$7); }
     ;
 
-
-    expression /* case */
-    : CASE expression OF case_list ESAC
-    { $$ = typcase($2,$4); }
+    /*********************************************************************
+     * Expr - case
+     *
+     * Expr ::= case Expr of Cases esac
+     *********************************************************************/
+    expr /* case */
+    : CASE expr OF case_list ESAC
+    { @$ = @5; SET_NODELOC(@5); $$ = typcase($2,$4); }
     ;
 
-    expression /* new */
+    /*********************************************************************
+     * Expr - new
+     *
+     * Expr ::= new TYPE
+     *********************************************************************/
+    expr
     : NEW TYPEID
-    { $$ = new_($2); }
+    { @$ = @2; SET_NODELOC(@2); $$ = new_($2); }
     ;
 
-    expression /* isvoid */
-    : ISVOID expression
-    { $$ = isvoid($2); }
+    /*********************************************************************
+     * Expr - isvoid
+     *
+     * Expr ::= isvoid Expr
+     *********************************************************************/
+    expr
+    : ISVOID expr
+    { @$ = @2; SET_NODELOC(@2); $$ = isvoid($2); }
     ;
 
-    expression /*  arithmetic and comparison operations */
-    : expression '+' expression
-    { $$ = plus($1,$3); }
-    | expression '-' expression
-    { $$ = sub($1,$3); }
-    | expression '*' expression
-    { $$ = mul($1,$3); }
-    | expression '/' expression
-    { $$ = divide($1,$3); }
-    | '~' expression
-    { $$ = neg($2); }
-    | expression '<' expression
-    { $$ = lt($1,$3); }
-    | expression '=' expression
-    { $$ = eq($1,$3); }
-    | expression LE expression
-    { $$ = leq($1,$3); }
-    | NOT expression
-    { $$ = comp($2); }
-    | '(' expression ')'
-    { $$ = $2; }
+    /*********************************************************************
+     * Expr - arithmetic and comparison
+     *
+     * Expr ::= Expr + Expr
+     *        | Expr - Expr
+     *        | Expr * Expr
+     *        | Expr / Expr
+     *        | ~ Expr
+     *        | Expr < Expr
+     *        | Expr <= Expr
+     *        | Expr = Expr
+     *        | not Expr
+     *        | (Expr)
+     *********************************************************************/
+    expr
+    : expr '+' expr
+    { @$ = @3; SET_NODELOC(@3); $$ = plus($1,$3); }
+    | expr '-' expr
+    { @$ = @3; SET_NODELOC(@3); $$ = sub($1,$3); }
+    | expr '*' expr
+    { @$ = @3; SET_NODELOC(@3); $$ = mul($1,$3); }
+    | expr '/' expr
+    { @$ = @3; SET_NODELOC(@3); $$ = divide($1,$3); }
+    | '~' expr
+    { @$ = @2; SET_NODELOC(@2); $$ = neg($2); }
+    | expr '<' expr
+    { @$ = @3; SET_NODELOC(@3); $$ = lt($1,$3); }
+    | expr '=' expr
+    { @$ = @3; SET_NODELOC(@3); $$ = eq($1,$3); }
+    | expr LE expr
+    { @$ = @3; SET_NODELOC(@3); $$ = leq($1,$3); }
+    | NOT expr
+    { @$ = @2; SET_NODELOC(@2); $$ = comp($2); }
+    | '(' expr ')'
+    { @$ = @3; SET_NODELOC(@3); $$ = $2; }
     ;
 
-    expression    /* constants */
+    /*********************************************************************
+     * Expr - constants
+     *
+     * Expr ::= integer
+     *        | string
+     *        | true
+     *        | false
+     *********************************************************************/
+    expr    /* constants */
     : INT_CONST
     { $$ = int_const($1); }
     | BOOL_CONST
@@ -394,7 +488,12 @@
     { $$ = string_const($1); }
     ;
 
-    expression /* identifiers */
+    /*********************************************************************
+     * Expr - identifier
+     *
+     * Expr ::= ID
+     *********************************************************************/
+    expr
     : OBJECTID
     { $$ = object($1); }
     ;
