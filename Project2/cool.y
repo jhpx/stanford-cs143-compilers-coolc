@@ -199,7 +199,7 @@
     { @$ = @7; SET_NODELOC(@7);
       $$ = class_($2,$4,$6,
                   stringtable.add_string(curr_filename)); }
-    | error
+    | error '{' feature_list '}'
     {}
     ;
 
@@ -232,7 +232,7 @@
     { @$ = @3; SET_NODELOC(@3); $$ = attr($1,$3,no_expr()); }
     | OBJECTID ':' TYPEID ASSIGN expr
     { @$ = @5; SET_NODELOC(@5); $$ = attr($1,$3,$5); }
-    | error
+    | error '{' expr '}'
     {}
     ;
 

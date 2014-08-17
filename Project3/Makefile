@@ -23,7 +23,7 @@ OUTPUT= good.output bad.output
 CPPINCLUDE= -I. -I${CLASSDIR}/include/PA${ASSN} -I${CLASSDIR}/src/PA${ASSN}
 
 FFLAGS = -d8 -ocool-lex.cc
-BFLAGS = --define=cool-parse.h -v -y -o cool-parse.cc --debug -p cool_yy
+BFLAGS = -d -v -y -o cool-parse.cc --debug -p cool_yy
 ASTBFLAGS = -d -v -y -b ast --debug -p ast_yy
 
 CC=g++

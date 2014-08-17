@@ -25,7 +25,7 @@ OUTPUT= good.output bad.output
 
 CPPINCLUDE= -I. -I${CLASSDIR}/include/PA${ASSN} -I${CLASSDIR}/src/PA${ASSN}
 
-BFLAGS= --define=cool-parse.h -v -y -o cool-parse.cc --debug -p cool_yy
+BFLAGS= -d -v -y -o cool-parse.cc --debug -p cool_yy
 
 CC= g++
 CFLAGS= -g -Wall -Wno-unused -Wno-deprecated -Wno-write-strings -DDEBUG ${CPPINCLUDE}
@@ -84,7 +84,7 @@ clean:
 clean-compile:
 	@-rm -f ${OBJS} ${CGEN} ${HGEN} ${DEPS}
 
-%.d: %.cc cool-tree.handcode.h ${LSRC}
+%.d: %.cc cool-tree.handcode.h cool-tree.aps ${LSRC}
 	${SHELL} -ec '${DEPEND} $< | sed '\''s/\($*\.o\)[ :]*/\1 $@ : /g'\'' > $@'
 
 -include ${CSRC:.cc=.d}
