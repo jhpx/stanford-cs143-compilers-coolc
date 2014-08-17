@@ -15,6 +15,7 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include <stdio.h>      // needed on Linux system
+#include <string.h>     // needed for filename process
 #include <unistd.h>     // for getopt
 #include "cool-parse.h" // bison-generated file; defines tokens
 #include "utilities.h"
@@ -53,39 +54,38 @@ void handle_flags(int argc, char *argv[]);
 int  cool_yydebug;
 
 // defined in utilities.cc
-extern void dump_cool_token(ostream& out, int lineno, 
-			    int token, YYSTYPE yylval);
+extern void dump_cool_token(ostream& out, int lineno,
+                            int token, YYSTYPE yylval);
 
 
 int main(int argc, char** argv) {
-	int token;
-	
-	handle_flags(argc,argv);
+        int token;
 
-	while (optind < argc) {
-	    fin = fopen(argv[optind], "rb");
-	    if (fin == NULL) {
-		cerr << "Could not open input file " << argv[optind] << endl;
-		exit(1);
-	    }
+        handle_flags(argc,argv);
+
+        while (optind < argc) {
+            fin = fopen(argv[optind], "rb");
+            if (fin == NULL) {
+                cerr << "Could not open input file " << argv[optind] << endl;
+                exit(1);
+            }
 
             // sm: the 'coolc' compiler's file-handling loop resets
             // this counter, so let's make the stand-alone lexer
             // do the same thing
             curr_lineno = 1;
 
-	    //
-	    // Scan and print all tokens.
-	    //
-	    cout << "#name \"" << argv[optind] << "\"" << endl;
-	    while ((token = cool_yylex()) != 0) {
-		dump_cool_token(cout, curr_lineno, token, cool_yylval);
-	    }
-	    fclose(fin);
-	    optind++;
-	}
-	exit(0);
+            //
+            // Scan and print all tokens.
+            //
+            char *filename = argv[optind];
+            int index = strrchr(filename,'/') - filename + 1;
+            cout << "#name \"" << &filename[index] << "\"" << endl;
+            while ((token = cool_yylex()) != 0) {
+                dump_cool_token(cout, curr_lineno, token, cool_yylval);
+            }
+            fclose(fin);
+            optind++;
+        }
+        exit(0);
 }
-
-
-
