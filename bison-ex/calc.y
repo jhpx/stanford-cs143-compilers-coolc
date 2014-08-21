@@ -76,6 +76,5 @@ yyerror (char const *s)
 int
 main (void)
 {
-  printf ("aaa");
   return yyparse ();
 }
