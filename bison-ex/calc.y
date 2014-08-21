@@ -1,34 +1,39 @@
-/* Reverse polish notation calculator.  */
-
+/* Infix notation calculator.  */
+     
 %{
   #define YYSTYPE double
-  #include <stdio.h>
   #include <math.h>
+  #include <stdio.h>
   int yylex (void);
   void yyerror (char const *);
 %}
 
+/* Bison declarations.  */
 %token NUM
+%token LF
+%left '-' '+'
+%left '*' '/'
+%left NEG     /* negation--unary minus */
+%right '^'    /* exponentiation */
 
-%% /* Grammar rules and actions follow.  */
-
+%% /* The grammar follows.  */
 input:    /* empty */
         | input line
 ;
 
 line:     '\n'
-        | exp '\n'      { printf ("\t%.10g\n", $1); }
+        | exp '\n'   { printf ("\t%.10g\n", $1);}
+        | error '\n' { yyerrok;                 }
 ;
 
-exp:      NUM           { $$ = $1;           }
-        | exp exp '+'   { $$ = $1 + $2;      }
-        | exp exp '-'   { $$ = $1 - $2;      }
-        | exp exp '*'   { $$ = $1 * $2;      }
-        | exp exp '/'   { $$ = $1 / $2;      }
-         /* Exponentiation */
-        | exp exp '^'   { $$ = pow ($1, $2); }
-         /* Unary minus    */
-        | exp 'n'       { $$ = -$1;          }
+exp:      NUM                { $$ = $1;         }
+        | exp '+' exp        { $$ = $1 + $3;    }
+        | exp '-' exp        { $$ = $1 - $3;    }
+        | exp '*' exp        { $$ = $1 * $3;    }
+        | exp '/' exp        { $$ = $1 / $3;    }
+        | '-' exp  %prec NEG { $$ = -$2;        }
+        | exp '^' exp        { $$ = pow ($1, $3); }
+        | '(' exp ')'        { $$ = $2;         }
 ;
 %%
 
@@ -45,6 +50,7 @@ yylex (void)
   /* Skip white space.  */
   while ((c = getchar ()) == ' ' || c == '\t')
     ;
+
   /* Process numbers.  */
   if (c == '.' || isdigit (c))
     {
@@ -52,6 +58,7 @@ yylex (void)
       scanf ("%lf", &yylval);
       return NUM;
     }
+
   /* Return end-of-input.  */
   if (c == EOF)
     return 0;
@@ -69,5 +76,6 @@ yyerror (char const *s)
 int
 main (void)
 {
+  printf ("aaa");
   return yyparse ();
 }
