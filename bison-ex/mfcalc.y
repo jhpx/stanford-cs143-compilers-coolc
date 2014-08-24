@@ -4,8 +4,6 @@
   #include <math.h>  /* For math functions, cos(), sin(), etc.  */
   #include "calc.h"  /* Contains definition of `symrec'.  */
   #include <stdio.h>
-  #include <string.h>
-  #include <stdlib.h>
   int yylex (void);
   void yyerror (char const *);
 %}
@@ -48,7 +46,9 @@ exp:      NUM                { $$ = $1;                         }
 ;
 /* End of grammar.  */
 %%
-
+#include <string.h>
+#include <stdlib.h>
+  
 int
 yylex (void)
 {
