@@ -1,14 +1,10 @@
-rpcalc.tab.c: rpcalc.y
-	bison rpcalc.y
+%.tab.c: %.y
+	bison $<
 
-rpcalc: rpcalc.tab.c
-	cc -lm -o rpcalc rpcalc.tab.c
+%alc: %alc.tab.c
+	cc -lm -o $@ $<
 
-calc.tab.c: calc.y
-	bison calc.y
-
-calc: calc.tab.c
-	cc -lm -o calc calc.tab.c
+.PHONY : clean
 
 clean: 
-	-rm -f *.o *.c rpcalc calc
+	-rm -f *.o *.c *calc *calc.exe

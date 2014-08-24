@@ -10,7 +10,6 @@
 
 /* Bison declarations.  */
 %token NUM
-%token LF
 %left '-' '+'
 %left '*' '/'
 %left NEG     /* negation--unary minus */
