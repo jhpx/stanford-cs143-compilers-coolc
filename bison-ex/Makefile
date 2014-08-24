@@ -1,7 +1,7 @@
 %.tab.c: %.y
 	bison $<
 
-%alc%: %alc.tab.c
+%alc: %alc.tab.c
 	cc -lm -o $@ $<
 
 .PHONY : clean
