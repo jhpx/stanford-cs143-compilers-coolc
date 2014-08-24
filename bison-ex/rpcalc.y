@@ -31,6 +31,7 @@ exp:      NUM           { $$ = $1;           }
         | exp 'n'       { $$ = -$1;          }
 ;
 %%
+#include <ctype.h>
 
 /* The lexical analyzer returns a double floating point
    number on the stack and the token NUM, or the numeric code

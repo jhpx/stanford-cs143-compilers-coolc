@@ -47,6 +47,8 @@ exp     : NUM           { $$ = $1; }
         | '(' exp ')'           { $$ = $2; }
 
 %%
+#include <ctype.h>
+
 int
 yylex (void)
 {

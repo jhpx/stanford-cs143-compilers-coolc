@@ -125,14 +125,31 @@ struct init
   double (*fnct) (double);
 };
 
+struct init_const
+{
+  char const *vname;
+  double value;
+};
 struct init const arith_fncts[] =
 {
-  "sin",  sin,
-  "cos",  cos,
-  "atan", atan,
-  "ln",   log,
-  "exp",  exp,
-  "sqrt", sqrt,
+  "sin",   sin,
+  "cos",   cos,
+  "tan",   tan,
+  "asin",  asin,
+  "acos",  acos,
+  "atan",  atan,
+  "ceil",  ceil,
+  "floor", floor,
+  "exp",   exp,
+  "ln",    log,
+  "log",   log10,
+  "sqrt",  sqrt,
+  "fabs",  fabs,
+  0, 0
+};
+struct init_const const arith_const[] =
+{
+  "pi", 3.1415926,
   0, 0
 };
 
@@ -149,6 +166,11 @@ init_table (void)
     {
       ptr = putsym (arith_fncts[i].fname, FNCT);
       ptr->value.fnctptr = arith_fncts[i].fnct;
+    }
+  for (i = 0; arith_const[i].vname != 0; i++)
+    {
+      ptr = putsym (arith_const[i].vname, VAR);
+      ptr->value.var = arith_const[i].value;
     }
 }
 
